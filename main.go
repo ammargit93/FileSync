@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"cliapp/textutil"
 
@@ -79,12 +80,17 @@ func main() {
 							fmt.Printf("%v: %d\n", key, val)
 						}
 					} else if c.Bool("grep") {
+
+						start := time.Now()
 						res, err := textutil.FindMatchingWords(filePaths)
+						elapsed := time.Since(start)
+
 						if err != nil {
 							fmt.Println("Error finding matching words:", err)
 							return err
 						}
 						fmt.Println(res)
+						fmt.Printf("Execution time : %s", elapsed)
 					} else {
 						fmt.Println("No valid flags provided. Use -count, -cchar, -cfreq, or -grep.")
 						fmt.Println("Flags:", c.FlagNames())

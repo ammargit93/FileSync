@@ -1,29 +1,62 @@
 package textutil
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"strings"
 )
 
+func ProcessText(f *os.File) []string {
+	data, _ := io.ReadAll(f)
+	textArr := strings.TrimSpace(string(data))
+	wordArr := strings.Fields(textArr)
+	return wordArr
+}
+
+func ConcurrentProcess2(wordArr1 []string, wordArr2 []string, l []string, c chan []string) {
+	var res []string
+
+	for i := len(l) / 2; i < len(l); i++ {
+		if wordArr1[i] == wordArr2[i] {
+			res = append(res, wordArr1[i])
+		}
+	}
+	c <- res
+	close(c)
+}
+
+func ConcurrentProcess1(wordArr1 []string, wordArr2 []string, l []string, c chan []string) {
+	var res []string
+
+	for i := 0; i < len(l)/2; i++ {
+		if wordArr1[i] == wordArr2[i] {
+			res = append(res, wordArr1[i])
+		}
+	}
+	c <- res
+	close(c)
+}
+
+// func SynchronousProcess(wordArr1 []string, wordArr2 []string, l []string) []string {
+// 	var res []string
+
+// 	for i := 0; i < len(l); i++ {
+// 		if wordArr1[i] == wordArr2[i] {
+// 			res = append(res, wordArr1[i])
+// 		}
+// 	}
+// 	return res
+// }
+
 func FindMatchingWords(f []string) ([]string, error) {
 	file1, _ := os.Open(f[0])
 	file2, _ := os.Open(f[1])
 
-	// if err != nil {
-	// 	return err
-	// }
 	defer file1.Close()
 	defer file2.Close()
 
-	data1, _ := io.ReadAll(file1)
-	textArr1 := strings.TrimSpace(string(data1))
-	wordArr1 := strings.Fields(textArr1)
-
-	data2, _ := io.ReadAll(file2)
-	textArr2 := strings.TrimSpace(string(data2))
-	wordArr2 := strings.Fields(textArr2)
+	wordArr1 := ProcessText(file1)
+	wordArr2 := ProcessText(file2)
 
 	var l []string
 	if len(wordArr1) < len(wordArr2) {
@@ -33,13 +66,17 @@ func FindMatchingWords(f []string) ([]string, error) {
 	}
 
 	var res []string
-	var j int
-	for i := range l {
-		if wordArr1[i] == wordArr2[j] {
-			res = append(res, wordArr1[i])
-			j++
-		}
-	}
+
+	c1 := make(chan []string)
+	c2 := make(chan []string)
+
+	go ConcurrentProcess1(wordArr1, wordArr2, l, c1)
+	go ConcurrentProcess2(wordArr1, wordArr2, l, c2)
+
+	msg1 := <-c1
+	msg2 := <-c2
+	res = append(msg1, msg2...)
+	// res = append(res, SynchronousProcess(wordArr1, wordArr2, l)...)
 	return res, nil
 }
 
@@ -51,10 +88,7 @@ func CountFreq(f []string) (map[string]int, error) {
 	}
 	defer file.Close()
 
-	data, _ := io.ReadAll(file)
-	textArr := strings.TrimSpace(string(data))
-
-	word := strings.Fields(textArr)
+	word := ProcessText(file)
 	for _, p := range word {
 		hashMap[p]++
 	}
