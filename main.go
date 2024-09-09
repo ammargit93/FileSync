@@ -18,48 +18,78 @@ func main() {
 
 		Commands: []*cli.Command{
 			{
-				Name:    "file",
-				Aliases: []string{"f"},
-				Usage:   "Returns Word count from a text file",
+				Name:    "file",        // Command name
+				Aliases: []string{"f"}, // Alias for the command
+				Usage:   "Process text files",
 				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:    "file",
+					&cli.StringSliceFlag{
+						Name:    "files", // Change the flag name to avoid conflict
 						Aliases: []string{"f"},
-						Usage:   "file input",
+						Usage:   "File input paths",
 					},
 					&cli.BoolFlag{
 						Name:    "count",
 						Aliases: []string{"c"},
-						Usage:   "Word Count",
+						Usage:   "Word count",
 					},
 					&cli.BoolFlag{
 						Name:    "cchar",
 						Aliases: []string{"cch"},
-						Usage:   "Char count",
+						Usage:   "Character count",
 					},
 					&cli.BoolFlag{
 						Name:    "cfreq",
 						Aliases: []string{"cf"},
-						Usage:   "Word Count frequency",
+						Usage:   "Word frequency count",
+					},
+					&cli.BoolFlag{
+						Name:    "grep",
+						Aliases: []string{"gp"},
+						Usage:   "Find common characters",
 					},
 				},
 				Action: func(c *cli.Context) error {
-					filepath := c.String("file")
-					if filepath == "" {
-						fmt.Println("Please provide a valid file path using the -f flag.")
+					filePaths := c.StringSlice("files") // Update to use the new flag name
+					if len(filePaths) == 0 {
+						fmt.Println("Please provide at least one file path using the -files flag.")
 						return nil
 					}
+
 					if c.Bool("count") {
-						wordCount, _ := textutil.CountWords(filepath)
+						wordCount, err := textutil.CountWords(filePaths)
+						if err != nil {
+							fmt.Println("Error counting words:", err)
+							return err
+						}
 						fmt.Println(wordCount)
-					} else if c.Bool("cch") {
-						charCount, _ := textutil.CountChar(filepath)
+					} else if c.Bool("cchar") {
+						charCount, err := textutil.CountChar(filePaths)
+						if err != nil {
+							fmt.Println("Error counting characters:", err)
+							return err
+						}
 						fmt.Println(charCount)
 					} else if c.Bool("cfreq") {
-						countFreq, _ := textutil.CountFreq(filepath)
+						countFreq, err := textutil.CountFreq(filePaths)
+						if err != nil {
+							fmt.Println("Error counting word frequency:", err)
+							return err
+						}
 						for key, val := range countFreq {
 							fmt.Printf("%v: %d\n", key, val)
 						}
+					} else if c.Bool("grep") {
+						res, err := textutil.FindMatchingWords(filePaths)
+						if err != nil {
+							fmt.Println("Error finding matching words:", err)
+							return err
+						}
+						fmt.Println(res)
+					} else {
+						fmt.Println("No valid flags provided. Use -count, -cchar, -cfreq, or -grep.")
+						fmt.Println("Flags:", c.FlagNames())
+						fmt.Println("Files:", filePaths)
+
 					}
 
 					return nil
@@ -68,8 +98,19 @@ func main() {
 		},
 	}
 
-	var err = app.Run(os.Args)
-	if err != nil {
-		fmt.Println(err)
+	if err := app.Run(os.Args); err != nil {
+		fmt.Println("Error running app:", err)
 	}
+	// c := make(chan string)
+	// go count("sheep", c)
+	// msg := <-c
+	// fmt.Print(msg)
+
 }
+
+// func count(thing string, c chan string) {
+// 	for i := 0; i <= 4; i++ {
+// 		c <- thing
+// 		time.Sleep(time.Millisecond * 500)
+// 	}
+// }
