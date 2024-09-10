@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	// "cliapp/textutil"
 )
 
 func SyncTwoFiles(filepath string, c chan string) {
@@ -36,15 +35,16 @@ func UpdateFile(filePath1 string, filePath2 string) error {
 	cmd := exec.Command(exepath, filePath1)
 	output, _ := cmd.CombinedOutput()
 
+	if err != nil {
+		fmt.Print(output)
+	}
+
 	s1, _ := os.Open(filePath1)
 	warr, _ := io.ReadAll(s1)
 
 	c := make(chan string)
 	go SyncTwoFiles(filePath2, c)
 	c <- string(warr)
-
-	fmt.Print(string(warr))
-	fmt.Print(output)
 
 	return nil
 }
