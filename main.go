@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"cliapp/fileops"
 	"cliapp/textutil"
 
 	"github.com/urfave/cli/v2"
@@ -101,22 +102,28 @@ func main() {
 					return nil
 				},
 			},
+			{
+				Name:    "sync",
+				Aliases: []string{"s"}, // Alias for the command
+				Usage:   "Sync two text files",
+				Flags: []cli.Flag{
+					&cli.StringSliceFlag{
+						Name:    "files", // Change the flag name to avoid conflict
+						Aliases: []string{"f"},
+						Usage:   "File input paths",
+					},
+				},
+				Action: func(ctx *cli.Context) error {
+					filePaths := ctx.StringSlice("files")
+					err := fileops.UpdateFile(filePaths[0], filePaths[1])
+					return err
+				},
+			},
 		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
 		fmt.Println("Error running app:", err)
 	}
-	// c := make(chan string)
-	// go count("sheep", c)
-	// msg := <-c
-	// fmt.Print(msg)
 
 }
-
-// func count(thing string, c chan string) {
-// 	for i := 0; i <= 4; i++ {
-// 		c <- thing
-// 		time.Sleep(time.Millisecond * 500)
-// 	}
-// }
