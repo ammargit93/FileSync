@@ -2,12 +2,42 @@ package cli
 
 import (
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"strings"
 
 	"cliapp/fileops"
 	"cliapp/textutil"
 
 	"github.com/urfave/cli/v2"
 )
+
+func DownloadFile(filepath string, url string) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	if _, err := os.Stat(filepath); err != nil {
+
+		f, err := os.Create(filepath)
+		if err != nil {
+			return err
+		}
+
+		_, err = io.Copy(f, resp.Body)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
 
 func App() *cli.App {
 
@@ -113,16 +143,54 @@ func App() *cli.App {
 				},
 				Action: func(ctx *cli.Context) error {
 					filePaths := ctx.StringSlice("files")
+					fmt.Println(filePaths)
 					err := fileops.UpdateFile(filePaths[0], filePaths[1])
 					return err
+				},
+			},
+			// Concurrent file download
+			{
+				Name:    "dwld",
+				Aliases: []string{"d"},
+				Usage:   "download files from the internet",
+				Flags: []cli.Flag{
+					&cli.StringSliceFlag{
+						Name:    "dwld",
+						Aliases: []string{"dw"},
+						Usage:   "File input paths",
+					},
+				},
+				Action: func(ctx *cli.Context) error {
+					// filePaths := ctx.StringSlice("dwld")
+					// fileUrl := "https://gophercoding.com/img/logo-original.png"
+					fileUrl := ctx.StringSlice("dwld")[0]
+					var s []string = strings.Split(fileUrl, "/")
+					var str string = s[len(s)-1]
+
+					cwd, err := os.Getwd()
+					if err != nil {
+						log.Fatal(err)
+					}
+					var path string
+					var arr []string = strings.Split(cwd, `\`)[:3]
+					for i := 0; i < len(arr); i++ {
+						path = path + arr[i] + `/`
+					}
+					path = path + `Downloads/` + str
+					fmt.Println(path)
+					err = DownloadFile(path, fileUrl)
+					if err != nil {
+						fmt.Println("Error downloading file: ", err)
+						return err
+					}
+
+					fmt.Println("HEllo downloads")
+					return nil
 				},
 			},
 		},
 	}
 
-	// if err := app.Run(os.Args); err != nil {
-	// 	fmt.Println("Error running app:", err)
-	// }
 	return app
 
 }

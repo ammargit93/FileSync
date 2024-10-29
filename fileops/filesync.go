@@ -48,3 +48,7 @@ func UpdateFile(filePath1 string, filePath2 string) error {
 
 	return nil
 }
+
+// func Download([]string) error {
+
+// }

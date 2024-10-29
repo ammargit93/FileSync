@@ -37,17 +37,6 @@ func ConcurrentProcess1(wordArr1 []string, wordArr2 []string, l []string, c chan
 	close(c)
 }
 
-// func SynchronousProcess(wordArr1 []string, wordArr2 []string, l []string) []string {
-// 	var res []string
-
-// 	for i := 0; i < len(l); i++ {
-// 		if wordArr1[i] == wordArr2[i] {
-// 			res = append(res, wordArr1[i])
-// 		}
-// 	}
-// 	return res
-// }
-
 func FindMatchingWords(f []string) ([]string, error) {
 	file1, _ := os.Open(f[0])
 	file2, _ := os.Open(f[1])
@@ -82,10 +71,8 @@ func FindMatchingWords(f []string) ([]string, error) {
 
 func CountFreq(f []string) (map[string]int, error) {
 	var hashMap = make(map[string]int)
-	file, err := os.Open(f[0])
-	if err != nil {
-		return hashMap, err
-	}
+	file, _ := os.Open(f[0])
+
 	defer file.Close()
 
 	word := ProcessText(file)
