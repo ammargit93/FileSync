@@ -3,8 +3,10 @@ package fileops
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 func SyncTwoFiles(filepath string, c chan string) {
@@ -49,6 +51,39 @@ func UpdateFile(filePath1 string, filePath2 string) error {
 	return nil
 }
 
-// func Download([]string) error {
+func DownloadFile(filepath string, url string) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	defer resp.Body.Close()
 
-// }
+	if _, err := os.Stat(filepath); err != nil {
+		f, err := os.Create(filepath)
+		if err != nil {
+			return err
+		}
+		_, err = io.Copy(f, resp.Body)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func SpawnGoroutine(fileUrl []string, path string) error {
+
+	for i := 0; i < len(fileUrl); i++ {
+		dest := ""
+		var s []string = strings.Split(fileUrl[i], "/")
+		var str string = s[len(s)-1]
+		dest = path + str
+		DownloadFile(dest, fileUrl[i])
+		fmt.Println(dest)
+		fmt.Println(fileUrl[i])
+
+	}
+	return nil
+}

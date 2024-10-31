@@ -2,9 +2,7 @@ package cli
 
 import (
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 
@@ -13,31 +11,6 @@ import (
 
 	"github.com/urfave/cli/v2"
 )
-
-func DownloadFile(filepath string, url string) error {
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	defer resp.Body.Close()
-
-	if _, err := os.Stat(filepath); err != nil {
-
-		f, err := os.Create(filepath)
-		if err != nil {
-			return err
-		}
-
-		_, err = io.Copy(f, resp.Body)
-		if err != nil {
-			return err
-		}
-
-	}
-
-	return nil
-}
 
 func App() *cli.App {
 
@@ -163,9 +136,9 @@ func App() *cli.App {
 				Action: func(ctx *cli.Context) error {
 					// filePaths := ctx.StringSlice("dwld")
 					// fileUrl := "https://gophercoding.com/img/logo-original.png"
-					fileUrl := ctx.StringSlice("dwld")[0]
-					var s []string = strings.Split(fileUrl, "/")
-					var str string = s[len(s)-1]
+					fileUrl := ctx.StringSlice("dwld")
+					// var s []string = strings.Split(fileUrl, "/")
+					// var str string = s[len(s)-1]
 
 					cwd, err := os.Getwd()
 					if err != nil {
@@ -176,9 +149,9 @@ func App() *cli.App {
 					for i := 0; i < len(arr); i++ {
 						path = path + arr[i] + `/`
 					}
-					path = path + `Downloads/` + str
+					path = path + `Downloads/`
 					fmt.Println(path)
-					err = DownloadFile(path, fileUrl)
+					err = fileops.SpawnGoroutine(fileUrl, path)
 					if err != nil {
 						fmt.Println("Error downloading file: ", err)
 						return err
