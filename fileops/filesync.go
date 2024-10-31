@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
+	"time"
 )
 
 func SyncTwoFiles(filepath string, c chan string) {
@@ -74,16 +76,22 @@ func DownloadFile(filepath string, url string) error {
 }
 
 func SpawnGoroutine(fileUrl []string, path string) error {
+	var wg sync.WaitGroup
 
+	start := time.Now()
 	for i := 0; i < len(fileUrl); i++ {
-		dest := ""
 		var s []string = strings.Split(fileUrl[i], "/")
 		var str string = s[len(s)-1]
-		dest = path + str
-		DownloadFile(dest, fileUrl[i])
-		fmt.Println(dest)
 		fmt.Println(fileUrl[i])
+		wg.Add(1)
+		go func() {
+			DownloadFile(path+str, fileUrl[i])
+			wg.Done()
+		}()
 
 	}
+	wg.Wait()
+	end := time.Since(start)
+	fmt.Println("Time to execute: %s", end)
 	return nil
 }

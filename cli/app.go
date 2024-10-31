@@ -134,12 +134,7 @@ func App() *cli.App {
 					},
 				},
 				Action: func(ctx *cli.Context) error {
-					// filePaths := ctx.StringSlice("dwld")
-					// fileUrl := "https://gophercoding.com/img/logo-original.png"
 					fileUrl := ctx.StringSlice("dwld")
-					// var s []string = strings.Split(fileUrl, "/")
-					// var str string = s[len(s)-1]
-
 					cwd, err := os.Getwd()
 					if err != nil {
 						log.Fatal(err)
@@ -150,14 +145,12 @@ func App() *cli.App {
 						path = path + arr[i] + `/`
 					}
 					path = path + `Downloads/`
-					fmt.Println(path)
 					err = fileops.SpawnGoroutine(fileUrl, path)
 					if err != nil {
 						fmt.Println("Error downloading file: ", err)
 						return err
 					}
 
-					fmt.Println("HEllo downloads")
 					return nil
 				},
 			},
