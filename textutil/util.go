@@ -1,7 +1,11 @@
 package textutil
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 )
@@ -115,4 +119,67 @@ func CountWords(f []string) (int, error) {
 
 	words := strings.Fields(text) // Fields splits by any whitespace, handling multiple spaces correctly
 	return len(words), nil
+}
+
+var GROQ_API_KEY = "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"
+
+type RequestBody struct {
+	Model    string              `json:"model"`
+	Messages []map[string]string `json:"messages"`
+}
+
+func modelPrompt(prompt string) error {
+	url := "https://api.groq.com/openai/v1/chat/completions"
+	reqBody := RequestBody{
+		Model: "llama3-8b-8192",
+		Messages: []map[string]string{
+			{
+				"role":    "user",
+				"content": prompt,
+			},
+		},
+	}
+
+	reqBodyBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request body: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBodyBytes))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+GROQ_API_KEY)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Print the status code for debugging
+	fmt.Println("Response Status Code:", resp.StatusCode)
+
+	// Read the response body
+	re, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	if len(re) == 0 {
+		fmt.Println("Response Body is empty.")
+	} else {
+		fmt.Println("Response Body:", string(re))
+	}
+
+	var in map[string]interface{}
+	if err := json.Unmarshal(re, &in); err != nil {
+		return fmt.Errorf("failed to unmarshal response: %v", err)
+	}
+
+	// Print the response
+	fmt.Println("Parsed JSON Response:", in)
+	return nil
 }

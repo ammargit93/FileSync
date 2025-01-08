@@ -154,6 +154,34 @@ func App() *cli.App {
 					return nil
 				},
 			},
+			{
+				Name:    "md",
+				Aliases: []string{""},
+				Usage:   "Generate markdowns for code files.",
+				Flags: []cli.Flag{
+					&cli.StringSliceFlag{
+						Name:    "to-md",
+						Aliases: []string{"md"},
+						Usage:   "File or directory path",
+					},
+				},
+				Action: func(ctx *cli.Context) error {
+					blobName := ctx.StringSlice("to-md")
+					// cwd, _ := os.Getwd()
+					// projectDir := strings.Split(cwd, "/")[len(cwd)-1]
+
+					var finalContent string
+					for _, v := range blobName {
+						if !fileops.IsDirOrNot(v) {
+							fileContent := fileops.ReadCodeFile(v)
+							finalContent += "\n" + fileContent + "\n"
+						}
+
+					}
+
+					return nil
+				},
+			},
 		},
 	}
 
